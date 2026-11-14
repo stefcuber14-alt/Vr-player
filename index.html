@@ -2,82 +2,125 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VR Player</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VR Player 4.0</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#101116;color:white;font-family:Arial}
-header{padding:18px;background:#191b24;text-align:center;font-size:23px;font-weight:bold}
+body{
+ margin:0;background:#101116;color:white;
+ font-family:Arial,sans-serif
+}
+header{
+ padding:18px;background:#191b24;
+ text-align:center;font-size:23px;font-weight:bold
+}
 main{padding:15px;max-width:700px;margin:auto}
-input,button{width:100%;padding:13px;margin:6px 0;border:0;border-radius:9px;font-size:15px}
+input,button{
+ width:100%;padding:13px;margin:6px 0;
+ border:0;border-radius:9px;font-size:15px
+}
 input{background:#252834;color:white}
 button{background:#7255ed;color:white;font-weight:bold}
 button:active{opacity:.7}
-#player{width:100%;margin-top:12px;background:black;border-radius:12px;overflow:hidden;aspect-ratio:16/9;position:relative}
-#video,#youtube{width:100%;height:100%;border:0;object-fit:contain}
-#youtube{display:none}
-#placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#aaa}
+#player{
+ width:100%;aspect-ratio:16/9;background:black;
+ margin-top:12px;border-radius:12px;overflow:hidden;
+ position:relative
+}
+#video{width:100%;height:100%;object-fit:contain}
+#youtube{width:100%;height:100%;border:0;display:none}
+#placeholder{
+ position:absolute;inset:0;display:flex;
+ align-items:center;justify-content:center;color:#aaa
+}
 .controls{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-#status{color:#aaa;text-align:center;font-size:13px;margin:12px}
-#vrScreen{display:none;position:fixed;inset:0;z-index:1000;background:black}
+#status{text-align:center;color:#aaa;font-size:13px;margin:12px}
+#vrScreen{
+ display:none;position:fixed;inset:0;
+ z-index:1000;background:black
+}
 #vrImages{display:flex;width:100%;height:100%}
-.vrEye{width:50%;height:100%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:black}
-.vrEye video,.vrEye canvas,.vrEye iframe{width:100%;height:100%;object-fit:contain;border:0}
-#exitVR{position:absolute;top:15px;left:50%;transform:translateX(-50%);width:auto;z-index:10;background:#d93636}
+.eye{
+ width:50%;height:100%;overflow:hidden;
+ display:flex;align-items:center;justify-content:center
+}
+.eye canvas{width:100%;height:100%;object-fit:contain}
+#exitVR{
+ position:absolute;top:12px;left:50%;
+ transform:translateX(-50%);width:auto;
+ z-index:10;background:#d93636
+}
+#vrMessage{
+ position:absolute;bottom:12px;left:0;right:0;
+ text-align:center;color:#aaa;font-size:12px;
+ pointer-events:none
+}
 </style>
 </head>
 <body>
-<header>🥽 VR PLAYER</header>
+<header>🥽 VR PLAYER 4.0</header>
 <main>
-<input id="videoURL" type="url" placeholder="Вставь ссылку на видео">
-<button onclick="openURL()">Открыть видео</button>
-<input id="fileInput" type="file" accept="video/*">
-<div id="player">
-<div id="placeholder">Здесь будет видео</div>
-<video id="video" playsinline controls></video>
-<iframe id="youtube" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-</div>
-<div class="controls">
-<button onclick="playVideo()">▶ Играть</button>
-<button onclick="pauseVideo()">⏸ Пауза</button>
-<button onclick="toggleFullscreen()">⛶ На весь экран</button>
-<button onclick="toggleVR()">🥽 VR режим</button>
-</div>
-<button onclick="stopVideo()">⏹ Остановить</button>
-<div id="status">VR Player готов</div>
+ <input id="videoURL" placeholder="Ссылка на видео">
+ <button onclick="openURL()">Открыть видео</button>
+ <input id="fileInput" type="file" accept="video/*">
+
+ <div id="player">
+  <div id="placeholder">Здесь будет видео</div>
+  <video id="video" playsinline controls></video>
+  <iframe id="youtube"
+   allow="autoplay; encrypted-media; picture-in-picture"
+   allowfullscreen></iframe>
+ </div>
+
+ <div class="controls">
+  <button onclick="playVideo()">▶ Играть</button>
+  <button onclick="pauseVideo()">⏸ Пауза</button>
+  <button onclick="toggleFullscreen()">⛶ Экран</button>
+  <button onclick="toggleVR()">🥽 Войти в VR</button>
+ </div>
+ <button onclick="stopVideo()">⏹ Остановить</button>
+ <div id="status">VR Player готов</div>
 </main>
+
 <div id="vrScreen">
-<button id="exitVR" onclick="exitVR()">✕ Выйти из VR</button>
-<div id="vrImages">
-<div class="vrEye" id="leftEye"></div>
-<div class="vrEye" id="rightEye"></div>
+ <button id="exitVR" onclick="exitVR()">✕ Выйти</button>
+ <div id="vrImages">
+  <div class="eye"><canvas id="leftCanvas"></canvas></div>
+  <div class="eye"><canvas id="rightCanvas"></canvas></div>
+ </div>
+ <div id="vrMessage"></div>
 </div>
-</div>
+
 <script>
   const video=document.getElementById('video');
 const youtube=document.getElementById('youtube');
 const placeholder=document.getElementById('placeholder');
 const statusText=document.getElementById('status');
 const vrScreen=document.getElementById('vrScreen');
-const leftEye=document.getElementById('leftEye');
-const rightEye=document.getElementById('rightEye');
+
+const leftCanvas=document.getElementById('leftCanvas');
+const rightCanvas=document.getElementById('rightCanvas');
+const leftCtx=leftCanvas.getContext('2d');
+const rightCtx=rightCanvas.getContext('2d');
 
 let currentType='';
-let currentURL='';
 let localURL='';
 let vrEnabled=false;
-let vrFrame=null;
-let orientationEnabled=false;
+let vrMode='';
+let animationID=null;
+let xrSession=null;
+let xrRefSpace=null;
+let xrGL=null;
 
-function setStatus(text){
- statusText.textContent=text;
+function setStatus(s){
+ statusText.textContent=s;
 }
 
 function getYouTubeID(url){
  try{
   const u=new URL(url);
-  if(u.hostname.includes('youtu.be')) return u.pathname.slice(1);
-  if(u.searchParams.get('v')) return u.searchParams.get('v');
+  if(u.hostname.includes('youtu.be'))return u.pathname.slice(1);
+  if(u.searchParams.get('v'))return u.searchParams.get('v');
   const m=u.pathname.match(/\/(embed|shorts|live)\/([^/?]+)/);
   return m?m[2]:null;
  }catch(e){return null}
@@ -94,25 +137,24 @@ function clearPlayers(){
 }
 
 function loadVideo(url){
+ exitVR();
  clearPlayers();
- currentURL=url;
+
  const id=getYouTubeID(url);
 
  if(id){
   currentType='youtube';
   video.style.display='none';
   youtube.style.display='block';
-  youtube.src='https://www.youtube.com/embed/'+id+'?autoplay=1&playsinline=1';
+  youtube.src='https://www.youtube.com/embed/'+id+'?playsinline=1';
   placeholder.style.display='none';
-  setStatus('Открыто видео YouTube');
+  setStatus('YouTube загружен');
  }else{
   currentType='url';
   video.src=url;
-  video.style.display='block';
-  youtube.style.display='none';
   placeholder.style.display='none';
   video.play().catch(()=>setStatus('Нажми Играть'));
-  setStatus('Видео загружается');
+  setStatus('Загрузка видео');
  }
 }
 
@@ -122,133 +164,235 @@ function openURL(){
  loadVideo(url);
 }
 
-document.getElementById('fileInput').addEventListener('change',function(){
- const file=this.files[0];
+document.getElementById('fileInput').addEventListener('change',e=>{
+ const file=e.target.files[0];
  if(!file)return;
+
+ exitVR();
  if(localURL)URL.revokeObjectURL(localURL);
+
  localURL=URL.createObjectURL(file);
  currentType='file';
- currentURL=localURL;
  clearPlayers();
  video.src=localURL;
- video.style.display='block';
  placeholder.style.display='none';
  video.play().catch(()=>setStatus('Нажми Играть'));
- setStatus('Локальное видео загружено');
+ setStatus('Файл загружен');
 });
-  function createVREye(container){
- container.innerHTML='';
- const canvas=document.createElement('canvas');
- canvas.width=640;
- canvas.height=480;
- container.appendChild(canvas);
- return canvas;
+  function resizeCanvases(){
+ const w=640,h=480;
+ leftCanvas.width=w;
+ leftCanvas.height=h;
+ rightCanvas.width=w;
+ rightCanvas.height=h;
 }
 
-function drawVREyes(){
- if(!vrEnabled||video.readyState<2)return;
+function drawEye(ctx,canvas,offset){
+ const w=canvas.width,h=canvas.height;
+ ctx.clearRect(0,0,w,h);
 
- const left=leftEye.querySelector('canvas');
- const right=rightEye.querySelector('canvas');
- if(!left||!right)return;
+ if(video.readyState<2)return;
 
- const ctx1=left.getContext('2d');
- const ctx2=right.getContext('2d');
+ // Два изображения одного видеопотока.
+ // Смещение небольшое, без искусственного обещания
+ // полноценной стереоскопической глубины.
+ const shift=offset;
 
- try{
-  ctx1.drawImage(video,0,0,left.width,left.height);
-  ctx2.drawImage(video,0,0,right.width,right.height);
- }catch(e){}
-
- vrFrame=requestAnimationFrame(drawVREyes);
+ ctx.drawImage(
+  video,
+  shift,0,
+  Math.max(1,video.videoWidth-shift),video.videoHeight,
+  0,0,w,h
+ );
 }
 
-function onPhoneOrientation(event){
- if(!vrEnabled)return;
+function renderCardboard(){
+ if(!vrEnabled||vrMode!=='cardboard')return;
 
- const x=Math.max(-25,Math.min(25,event.gamma||0));
- const y=Math.max(-25,Math.min(25,event.beta||0));
+ drawEye(leftCtx,leftCanvas,0);
+ drawEye(rightCtx,rightCanvas,0);
 
- leftEye.style.transform=`translate(${x/2}px,${y/2}px)`;
- rightEye.style.transform=`translate(${-x/2}px,${-y/2}px)`;
+ animationID=requestAnimationFrame(renderCardboard);
 }
 
-async function requestMotionPermission(){
+async function requestMotion(){
  try{
   if(typeof DeviceOrientationEvent!=='undefined'&&
      typeof DeviceOrientationEvent.requestPermission==='function'){
    const result=await DeviceOrientationEvent.requestPermission();
    if(result!=='granted')return false;
   }
-  window.addEventListener('deviceorientation',onPhoneOrientation);
-  orientationEnabled=true;
+
+  window.addEventListener('deviceorientation',onOrientation);
   return true;
  }catch(e){
   return false;
  }
-    }
-  async function toggleVR(){
- if(!currentType){
-  setStatus('Сначала открой видео');
-  return;
- }
+}
 
- if(currentType!=='youtube'&&video.readyState===0){
-  setStatus('Подожди загрузки видео');
-  return;
- }
+function onOrientation(event){
+ if(!vrEnabled)return;
 
+ const gamma=Math.max(-30,Math.min(30,event.gamma||0));
+ const beta=Math.max(-30,Math.min(30,event.beta||0));
+
+ const shiftX=gamma*0.3;
+ const shiftY=beta*0.3;
+
+ document.getElementById('vrImages').style.transform=
+  `translate(${shiftX}px,${shiftY}px)`;
+}
+
+async function startCardboard(){
+ vrMode='cardboard';
  vrEnabled=true;
  vrScreen.style.display='block';
 
- if(currentType==='youtube'){
-  leftEye.innerHTML='<iframe src="'+youtube.src+'" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
-  rightEye.innerHTML='<div style="color:white;text-align:center">Для YouTube копирование изображения недоступно</div>';
- }else{
-  video.pause();
-  createVREye(leftEye);
-  createVREye(rightEye);
-  video.play().catch(()=>{});
-  drawVREyes();
- }
+ resizeCanvases();
 
- const motion=await requestMotionPermission();
+ const motion=await requestMotion();
 
  try{
   await vrScreen.requestFullscreen();
  }catch(e){}
 
- setStatus(motion?'VR включён':'VR включён без датчика движения');
+ video.play().catch(()=>{});
+ renderCardboard();
+
+ document.getElementById('vrMessage').textContent=
+  motion?'Cardboard • Датчик движения включён':
+  'Cardboard • Без датчика движения';
+  }
+  async function startWebXR(){
+ if(!navigator.xr)return false;
+
+ try{
+  const supported=await navigator.xr.isSessionSupported('immersive-vr');
+  if(!supported)return false;
+
+  xrSession=await navigator.xr.requestSession('immersive-vr');
+
+  const canvas=document.createElement('canvas');
+  xrGL=canvas.getContext('webgl',{
+   xrCompatible:true,alpha:false
+  });
+
+  if(!xrGL)throw new Error('WebGL недоступен');
+
+  await xrGL.makeXRCompatible();
+
+  const layer=new XRWebGLLayer(xrSession,xrGL);
+  xrSession.updateRenderState({baseLayer:layer});
+
+  xrRefSpace=await xrSession.requestReferenceSpace('local');
+
+  xrSession.addEventListener('end',()=>{
+   xrSession=null;
+   xrRefSpace=null;
+   xrGL=null;
+   exitVR();
+  });
+
+  vrMode='webxr';
+  vrEnabled=true;
+  video.play().catch(()=>{});
+
+  xrSession.requestAnimationFrame(renderXR);
+  return true;
+ }catch(e){
+  if(xrSession){
+   try{await xrSession.end()}catch(err){}
+  }
+  xrSession=null;
+  return false;
+ }
 }
 
-function exitVR(){
+function renderXR(time,frame){
+ if(!xrSession||!vrEnabled)return;
+
+ const pose=frame.getViewerPose(xrRefSpace);
+
+ if(pose&&video.readyState>=2){
+  const layer=xrSession.renderState.baseLayer;
+  const gl=xrGL;
+
+  gl.bindFramebuffer(gl.FRAMEBUFFER,layer.framebuffer);
+  gl.enable(gl.SCISSOR_TEST);
+
+  for(const view of pose.views){
+   const viewport=layer.getViewport(view);
+   gl.viewport(viewport.x,viewport.y,viewport.width,viewport.height);
+   gl.scissor(viewport.x,viewport.y,viewport.width,viewport.height);
+   gl.clearColor(0,0,0,1);
+   gl.clear(gl.COLOR_BUFFER_BIT);
+  }
+
+  gl.disable(gl.SCISSOR_TEST);
+ }
+
+ xrSession.requestAnimationFrame(renderXR);
+}
+
+async function toggleVR(){
+ if(!currentType){
+  setStatus('Сначала открой видео');
+  return;
+ }
+
+ if(currentType==='youtube'){
+  setStatus('Для VR открой прямую ссылку на видео или файл');
+  return;
+ }
+
+ const xrStarted=await startWebXR();
+
+ if(!xrStarted){
+  await startCardboard();
+  setStatus('Включён режим Cardboard');
+ }else{
+  setStatus('WebXR-сеанс запущен');
+ }
+}
+
+async function exitVR(){
  vrEnabled=false;
- if(vrFrame)cancelAnimationFrame(vrFrame);
- window.removeEventListener('deviceorientation',onPhoneOrientation);
- orientationEnabled=false;
- leftEye.innerHTML='';
- rightEye.innerHTML='';
- leftEye.style.transform='';
- rightEye.style.transform='';
+
+ if(animationID){
+  cancelAnimationFrame(animationID);
+  animationID=null;
+ }
+
+ window.removeEventListener('deviceorientation',onOrientation);
+
+ document.getElementById('vrImages').style.transform='';
+
  vrScreen.style.display='none';
 
- if(document.fullscreenElement){
-  document.exitFullscreen().catch(()=>{});
+ if(xrSession){
+  const session=xrSession;
+  xrSession=null;
+  try{await session.end()}catch(e){}
  }
- setStatus('VR выключен');
+
+ if(document.fullscreenElement){
+  try{await document.exitFullscreen()}catch(e){}
+ }
+
+ vrMode='';
 }
 
 function playVideo(){
  if(currentType==='youtube'){
   setStatus('Управляй YouTube через его плеер');
  }else{
-  video.play().catch(()=>setStatus('Не удалось запустить видео'));
+  video.play().catch(()=>{});
  }
 }
 
 function pauseVideo(){
  if(currentType==='youtube'){
-  setStatus('Поставь видео на паузу в YouTube');
+  setStatus('Пауза YouTube — через его плеер');
  }else{
   video.pause();
  }
@@ -266,6 +410,7 @@ function stopVideo(){
 
 function toggleFullscreen(){
  const player=document.getElementById('player');
+
  if(!document.fullscreenElement){
   player.requestFullscreen?.().catch(()=>{});
  }else{
@@ -281,7 +426,7 @@ window.addEventListener('pagehide',()=>{
  if(localURL)URL.revokeObjectURL(localURL);
 });
 
-setStatus('VR Player готов!');
+setStatus('VR Player 4.0 готов!');
 </script>
 </body>
 </html>
