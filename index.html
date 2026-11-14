@@ -1,0 +1,305 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#090914">
+<title>VR Player</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #090914;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  padding: 22px;
+  text-align: center;
+  background: #15152b;
+  border-bottom: 1px solid #34345a;
+}
+
+.logo {
+  font-size: 28px;
+  font-weight: bold;
+  color: #a78bfa;
+}
+
+header p {
+  color: #aaa;
+}
+
+main {
+  max-width: 850px;
+  margin: auto;
+  padding: 16px;
+}
+
+.panel {
+  background: #17172d;
+  border: 1px solid #34345a;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+h2 {
+  font-size: 19px;
+}
+
+input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #555078;
+  background: #090914;
+  color: white;
+  font-size: 16px;
+}
+
+button, .pick {
+  display: inline-block;
+  border: 0;
+  border-radius: 10px;
+  padding: 13px 16px;
+  background: #7957e8;
+  color: white;
+  font-weight: bold;
+  font-size: 15px;
+  margin: 8px 5px 0 0;
+  cursor: pointer;
+}
+
+.secondary {
+  background: #353550;
+}
+
+#stage {
+  display: flex;
+  background: #000;
+  aspect-ratio: 16/9;
+  border-radius: 12px;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+}
+
+video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+#right {
+  display: none;
+}
+
+#stage.vr video {
+  width: 50%;
+}
+
+#stage.vr #right {
+  display: block;
+}
+
+#hint {
+  color: #aaa;
+  text-align: center;
+  padding: 20px;
+}
+
+small {
+  color: #aaa;
+}
+</style>
+</head>
+<body>
+  
+<header>
+  <div class="logo">🥽 VR PLAYER</div>
+  <p>Твой видеоплеер для телефона</p>
+</header>
+
+<main>
+
+<section class="panel">
+  <h2>🎬 Открыть видео</h2>
+
+  <input
+    id="url"
+    type="url"
+    placeholder="Прямая ссылка на MP4 или WebM"
+  >
+
+  <button onclick="openUrl()">Открыть ссылку</button>
+
+  <label class="pick" for="file">
+    Выбрать видеофайл
+  </label>
+
+  <input
+    id="file"
+    type="file"
+    accept="video/*"
+    hidden
+  >
+
+  <p id="status">
+    <small>Ожидаю видео...</small>
+  </p>
+</section>
+
+<section class="panel">
+  <h2>📺 Видеоплеер</h2>
+
+  <div id="stage">
+    <div id="hint">Сначала открой видео</div>
+    <video id="left" controls playsinline></video>
+    <video id="right" muted playsinline></video>
+  </div>
+
+  <button onclick="play()">▶ Играть</button>
+  <button class="secondary" onclick="pause()">⏸ Пауза</button>
+  <button class="secondary" onclick="stop()">⏹ Стоп</button>
+  <button class="secondary" onclick="full()">⛶ Полный экран</button>
+
+  <button id="vrbtn" onclick="toggleVR()">
+    🥽 VR-режим
+  </button>
+
+  <p>
+    <small>
+      VR-режим показывает две копии видео рядом.
+      Это не 360°-видео.
+    </small>
+  </p>
+</section>
+
+</main>
+<script>
+  
+const l = document.getElementById('left');
+const r = document.getElementById('right');
+const stage = document.getElementById('stage');
+
+let currentURL = '';
+
+function loadVideo(src) {
+  if (currentURL.startsWith('blob:')) {
+    URL.revokeObjectURL(currentURL);
+  }
+
+  currentURL = src;
+  l.src = src;
+  r.src = src;
+
+  l.load();
+  r.load();
+
+  document.getElementById('hint').style.display = 'none';
+  document.getElementById('status').textContent =
+    'Видео загружается...';
+}
+
+function openUrl() {
+  const value = document.getElementById('url').value.trim();
+
+  try {
+    const url = new URL(value);
+
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      throw new Error();
+    }
+
+    loadVideo(value);
+  } catch {
+    document.getElementById('status').textContent =
+      'Проверь ссылку на видео!';
+  }
+}
+
+document.getElementById('file').addEventListener('change', e => {
+  const file = e.target.files[0];
+
+  if (file) {
+    loadVideo(URL.createObjectURL(file));
+  }
+});
+
+function play() {
+  l.play().catch(() => {});
+
+  if (stage.classList.contains('vr')) {
+    r.play().catch(() => {});
+  }
+}
+
+function pause() {
+  l.pause();
+  r.pause();
+}
+
+function stop() {
+  pause();
+  l.currentTime = 0;
+  r.currentTime = 0;
+}
+
+function full() {
+  if (stage.requestFullscreen) {
+    stage.requestFullscreen();
+  }
+}
+
+function toggleVR() {
+  stage.classList.toggle('vr');
+
+  const enabled = stage.classList.contains('vr');
+
+  document.getElementById('vrbtn').textContent =
+    enabled ? '❌ Выключить VR' : '🥽 VR-режим';
+
+  if (enabled) {
+    r.currentTime = l.currentTime;
+
+    if (!l.paused) {
+      r.play().catch(() => {});
+    }
+  } else {
+    r.pause();
+  }
+}
+
+l.addEventListener('timeupdate', () => {
+  if (
+    stage.classList.contains('vr') &&
+    Math.abs(r.currentTime - l.currentTime) > 0.25
+  ) {
+    r.currentTime = l.currentTime;
+  }
+});
+
+l.addEventListener('play', () => {
+  if (stage.classList.contains('vr')) {
+    r.play().catch(() => {});
+  }
+});
+
+l.addEventListener('pause', () => {
+  r.pause();
+});
+
+l.addEventListener('error', () => {
+  document.getElementById('status').textContent =
+    'Не удалось открыть видео. Проверь ссылку или формат.';
+});
+</script>
+</body>
+</html>
