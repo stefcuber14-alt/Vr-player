@@ -4,8 +4,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#090914">
-<title>VR Player</title>
+<meta name="theme-color" content="#080b16">
+<title>VR Player 2.0</title>
 
 <style>
 * {
@@ -14,26 +14,28 @@
 
 body {
   margin: 0;
-  background: #090914;
+  background: #080b16;
   color: white;
   font-family: Arial, sans-serif;
 }
 
 header {
-  padding: 22px;
+  padding: 20px;
   text-align: center;
-  background: #15152b;
-  border-bottom: 1px solid #34345a;
+  background: #11182b;
+  border-bottom: 1px solid #283451;
 }
 
-.logo {
-  font-size: 28px;
-  font-weight: bold;
-  color: #a78bfa;
+header h1 {
+  margin: 0;
+  font-size: 26px;
+  color: #8c9eff;
 }
 
 header p {
-  color: #aaa;
+  color: #9ba8c7;
+  margin: 7px 0 0;
+  font-size: 13px;
 }
 
 main {
@@ -43,263 +45,565 @@ main {
 }
 
 .panel {
-  background: #17172d;
-  border: 1px solid #34345a;
+  background: #11182b;
+  border: 1px solid #283451;
   border-radius: 16px;
   padding: 16px;
   margin-bottom: 16px;
 }
 
 h2 {
-  font-size: 19px;
+  font-size: 17px;
+  margin: 0 0 13px;
 }
 
-input {
+input[type="text"] {
   width: 100%;
   padding: 14px;
   border-radius: 10px;
-  border: 1px solid #555078;
-  background: #090914;
+  border: 1px solid #344568;
+  background: #080d1c;
   color: white;
-  font-size: 16px;
+  font-size: 15px;
+  outline: none;
 }
 
-button, .pick {
-  display: inline-block;
-  border: 0;
+input:focus {
+  border-color: #8194ff;
+}
+
+button, .file-label {
+  border: none;
   border-radius: 10px;
   padding: 13px 16px;
-  background: #7957e8;
+  background: #5269e8;
   color: white;
+  font-size: 14px;
   font-weight: bold;
-  font-size: 15px;
-  margin: 8px 5px 0 0;
   cursor: pointer;
 }
 
+button:active, .file-label:active {
+  transform: scale(.97);
+}
+
 .secondary {
-  background: #353550;
+  background: #263451;
 }
 
-#stage {
+.danger {
+  background: #a33c55;
+}
+
+.url-row {
   display: flex;
-  background: #000;
-  aspect-ratio: 16/9;
-  border-radius: 12px;
-  overflow: hidden;
-  align-items: center;
-  justify-content: center;
+  gap: 8px;
 }
 
-video {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+.url-row button {
+  flex-shrink: 0;
 }
 
-#right {
+.file-label {
+  display: block;
+  text-align: center;
+  margin-top: 12px;
+}
+
+#fileInput {
   display: none;
 }
 
-#stage.vr video {
-  width: 50%;
+#player {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 13px;
+  overflow: hidden;
 }
 
-#stage.vr #right {
-  display: block;
+#videoPlayer, #youtubePlayer {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: contain;
+  background: #000;
 }
 
-#hint {
-  color: #aaa;
+#youtubePlayer {
+  display: none;
+}
+
+#placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #8793b5;
   text-align: center;
   padding: 20px;
+  pointer-events: none;
 }
 
-small {
-  color: #aaa;
+#placeholder .symbol {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.controls button {
+  flex: 1;
+  min-width: 90px;
+}
+
+#status {
+  color: #9ba8c7;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+#vrView {
+  display: none;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: black;
+  overflow: hidden;
+  border-radius: 13px;
+  gap: 2px;
+}
+
+.vr-side {
+  width: 50%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.vr-side video, .vr-side iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: contain;
+}
+
+.info {
+  color: #9ba8c7;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  color: #65718f;
+  font-size: 12px;
 }
 </style>
 </head>
+
 <body>
-  
+
 <header>
-  <div class="logo">🥽 VR PLAYER</div>
+  <h1>🥽 VR PLAYER</h1>
   <p>Твой видеоплеер для телефона</p>
 </header>
 
 <main>
 
 <section class="panel">
-  <h2>🎬 Открыть видео</h2>
+  <h2>🔗 Открыть видео по ссылке</h2>
 
-  <input
-    id="url"
-    type="url"
-    placeholder="Прямая ссылка на MP4 или WebM"
-  >
+  <div class="url-row">
+    <input id="urlInput" type="text"
+      placeholder="Вставь ссылку на видео или YouTube">
+    <button onclick="openURL()">Открыть</button>
+  </div>
 
-  <button onclick="openUrl()">Открыть ссылку</button>
-
-  <label class="pick" for="file">
-    Выбрать видеофайл
+  <label class="file-label" for="fileInput">
+    📁 Выбрать видео с телефона
   </label>
-
-  <input
-    id="file"
-    type="file"
-    accept="video/*"
-    hidden
-  >
-
-  <p id="status">
-    <small>Ожидаю видео...</small>
-  </p>
+  <input id="fileInput" type="file"
+    accept="video/*">
 </section>
 
 <section class="panel">
-  <h2>📺 Видеоплеер</h2>
+  <h2>🎬 Видеоплеер</h2>
 
-  <div id="stage">
-    <div id="hint">Сначала открой видео</div>
-    <video id="left" controls playsinline></video>
-    <video id="right" muted playsinline></video>
+  <div id="player">
+    <video id="videoPlayer" controls playsinline></video>
+    <iframe id="youtubePlayer"
+      allow="autoplay; encrypted-media; picture-in-picture"
+      allowfullscreen></iframe>
+
+    <div id="placeholder">
+      <div class="symbol">▶️</div>
+      <div>Здесь будет твоё видео</div>
+    </div>
   </div>
 
-  <button onclick="play()">▶ Играть</button>
-  <button class="secondary" onclick="pause()">⏸ Пауза</button>
-  <button class="secondary" onclick="stop()">⏹ Стоп</button>
-  <button class="secondary" onclick="full()">⛶ Полный экран</button>
+  <div id="vrView">
+    <div class="vr-side" id="vrLeft"></div>
+    <div class="vr-side" id="vrRight"></div>
+  </div>
 
-  <button id="vrbtn" onclick="toggleVR()">
-    🥽 VR-режим
-  </button>
+  <div class="controls">
+    <button onclick="playVideo()">▶ Play</button>
+    <button class="secondary" onclick="pauseVideo()">⏸ Pause</button>
+    <button class="secondary" onclick="toggleFullscreen()">⛶ Экран</button>
+    <button class="secondary" onclick="toggleVR()">🥽 VR</button>
+    <button class="danger" onclick="stopVideo()">■ Стоп</button>
+  </div>
 
-  <p>
-    <small>
-      VR-режим показывает две копии видео рядом.
-      Это не 360°-видео.
-    </small>
-  </p>
+  <div id="status">Ожидание видео...</div>
+</section>
+
+<section class="panel">
+  <h2>ℹ️ Информация</h2>
+  <div class="info">
+    YouTube загружается через встроенный плеер.
+    Прямые ссылки на видео открываются через обычный видеоплеер.
+    VR-режим показывает две копии изображения рядом.
+  </div>
 </section>
 
 </main>
+
+<footer>VR Player 2.0 · HTML Edition</footer>
+
 <script>
   
-const l = document.getElementById('left');
-const r = document.getElementById('right');
-const stage = document.getElementById('stage');
+const video = document.getElementById('videoPlayer');
+const youtube = document.getElementById('youtubePlayer');
+const placeholder = document.getElementById('placeholder');
+const statusText = document.getElementById('status');
 
+const vrView = document.getElementById('vrView');
+const vrLeft = document.getElementById('vrLeft');
+const vrRight = document.getElementById('vrRight');
+
+let currentType = '';
 let currentURL = '';
+let localURL = '';
+let vrEnabled = false;
 
-function loadVideo(src) {
-  if (currentURL.startsWith('blob:')) {
-    URL.revokeObjectURL(currentURL);
-  }
-
-  currentURL = src;
-  l.src = src;
-  r.src = src;
-
-  l.load();
-  r.load();
-
-  document.getElementById('hint').style.display = 'none';
-  document.getElementById('status').textContent =
-    'Видео загружается...';
-}
-
-function openUrl() {
-  const value = document.getElementById('url').value.trim();
-
+function getYouTubeID(url) {
   try {
-    const url = new URL(value);
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, '');
 
-    if (!['http:', 'https:'].includes(url.protocol)) {
-      throw new Error();
+    if (host === 'youtu.be') {
+      return parsed.pathname.split('/')[1] || null;
     }
 
-    loadVideo(value);
+    if (
+      host === 'youtube.com' ||
+      host === 'm.youtube.com' ||
+      host === 'youtube-nocookie.com'
+    ) {
+      if (parsed.pathname === '/watch') {
+        return parsed.searchParams.get('v');
+      }
+
+      const match = parsed.pathname.match(
+        /^\/(embed|shorts|live)\/([^/?]+)/
+      );
+
+      return match ? match[2] : null;
+    }
+
+    return null;
   } catch {
-    document.getElementById('status').textContent =
-      'Проверь ссылку на видео!';
+    return null;
   }
 }
 
-document.getElementById('file').addEventListener('change', e => {
-  const file = e.target.files[0];
+function setStatus(message) {
+  statusText.textContent = message;
+}
 
-  if (file) {
-    loadVideo(URL.createObjectURL(file));
+function clearPlayers() {
+  video.pause();
+  video.removeAttribute('src');
+  video.load();
+
+  youtube.src = 'about:blank';
+
+  vrLeft.innerHTML = '';
+  vrRight.innerHTML = '';
+}
+
+function loadVideo(url) {
+  const id = getYouTubeID(url);
+
+  if (localURL) {
+    URL.revokeObjectURL(localURL);
+    localURL = '';
+  }
+
+  clearPlayers();
+
+  if (id) {
+    currentType = 'youtube';
+    currentURL = url;
+
+    youtube.src =
+      'https://www.youtube.com/embed/' +
+      encodeURIComponent(id) +
+      '?playsinline=1&rel=0';
+
+    youtube.style.display = 'block';
+    video.style.display = 'none';
+
+    placeholder.style.display = 'none';
+
+    setStatus('YouTube загружается...');
+    updateVR();
+    return;
+  }
+
+  if (!/^https?:\/\//i.test(url)) {
+    setStatus('Неправильная ссылка');
+    return;
+  }
+
+  currentType = 'video';
+  currentURL = url;
+
+  youtube.style.display = 'none';
+  video.style.display = 'block';
+
+  video.src = url;
+  video.load();
+
+  placeholder.style.display = 'none';
+
+  setStatus('Видео загружается...');
+  updateVR();
+}
+
+function openURL() {
+  const url = document.getElementById('urlInput').value.trim();
+
+  if (!url) {
+    setStatus('Сначала вставь ссылку');
+    return;
+  }
+
+  loadVideo(url);
+}
+
+document.getElementById('fileInput').addEventListener(
+  'change',
+  function(event) {
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    if (localURL) URL.revokeObjectURL(localURL);
+
+    clearPlayers();
+
+    localURL = URL.createObjectURL(file);
+
+    currentType = 'video';
+    currentURL = localURL;
+
+    youtube.style.display = 'none';
+    video.style.display = 'block';
+
+    video.src = localURL;
+    video.load();
+
+    placeholder.style.display = 'none';
+
+    setStatus('Файл загружен: ' + file.name);
+    updateVR();
+  }
+);
+
+video.addEventListener('error', function() {
+  if (currentType === 'video') {
+    setStatus('Не удалось открыть видео. Проверь ссылку или формат.');
   }
 });
 
-function play() {
-  l.play().catch(() => {});
-
-  if (stage.classList.contains('vr')) {
-    r.play().catch(() => {});
+video.addEventListener('loadeddata', function() {
+  if (currentType === 'video') {
+    setStatus('Видео готово к просмотру');
+  }
+});
+  
+function playVideo() {
+  if (currentType === 'video') {
+    video.play().catch(() => {
+      setStatus('Не удалось запустить видео');
+    });
+  } else if (currentType === 'youtube') {
+    youtube.contentWindow.postMessage(
+      JSON.stringify({
+        event: 'command',
+        func: 'playVideo',
+        args: []
+      }),
+      '*'
+    );
+  } else {
+    setStatus('Сначала открой видео');
   }
 }
 
-function pause() {
-  l.pause();
-  r.pause();
+function pauseVideo() {
+  if (currentType === 'video') {
+    video.pause();
+  } else if (currentType === 'youtube') {
+    youtube.contentWindow.postMessage(
+      JSON.stringify({
+        event: 'command',
+        func: 'pauseVideo',
+        args: []
+      }),
+      '*'
+    );
+  }
 }
 
-function stop() {
-  pause();
-  l.currentTime = 0;
-  r.currentTime = 0;
+function stopVideo() {
+  if (currentType === 'video') {
+    video.pause();
+    video.currentTime = 0;
+  } else if (currentType === 'youtube') {
+    youtube.src = youtube.src;
+  }
+
+  setStatus('Видео остановлено');
 }
 
-function full() {
-  if (stage.requestFullscreen) {
-    stage.requestFullscreen();
+function toggleFullscreen() {
+  const target = vrEnabled ? vrView : document.getElementById('player');
+
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  } else if (target.requestFullscreen) {
+    target.requestFullscreen().catch(() => {
+      setStatus('Полный экран недоступен');
+    });
+  }
+}
+
+function createVRVideo(container) {
+  const copy = document.createElement('video');
+
+  copy.src = currentURL;
+  copy.muted = true;
+  copy.loop = true;
+  copy.playsInline = true;
+  copy.autoplay = true;
+
+  container.appendChild(copy);
+
+  copy.play().catch(() => {});
+}
+
+function createVRYoutube(container) {
+  const frame = document.createElement('iframe');
+
+  const id = getYouTubeID(currentURL);
+
+  frame.src =
+    'https://www.youtube.com/embed/' +
+    encodeURIComponent(id) +
+    '?autoplay=1&mute=1&playsinline=1&controls=1';
+
+  frame.allow = 'autoplay; encrypted-media; picture-in-picture';
+  frame.allowFullscreen = true;
+
+  container.appendChild(frame);
+}
+
+function updateVR() {
+  vrLeft.innerHTML = '';
+  vrRight.innerHTML = '';
+
+  if (!vrEnabled || !currentType) return;
+
+  if (currentType === 'youtube') {
+    createVRYoutube(vrLeft);
+    createVRYoutube(vrRight);
+  } else {
+    createVRVideo(vrLeft);
+    createVRVideo(vrRight);
   }
 }
 
 function toggleVR() {
-  stage.classList.toggle('vr');
-
-  const enabled = stage.classList.contains('vr');
-
-  document.getElementById('vrbtn').textContent =
-    enabled ? '❌ Выключить VR' : '🥽 VR-режим';
-
-  if (enabled) {
-    r.currentTime = l.currentTime;
-
-    if (!l.paused) {
-      r.play().catch(() => {});
-    }
-  } else {
-    r.pause();
+  if (!currentType) {
+    setStatus('Сначала открой видео');
+    return;
   }
+
+  vrEnabled = !vrEnabled;
+
+  document.getElementById('player').style.display =
+    vrEnabled ? 'none' : 'block';
+
+  vrView.style.display =
+    vrEnabled ? 'flex' : 'none';
+
+  updateVR();
+
+  setStatus(
+    vrEnabled
+      ? 'VR-режим включён'
+      : 'Обычный режим включён'
+  );
 }
 
-l.addEventListener('timeupdate', () => {
-  if (
-    stage.classList.contains('vr') &&
-    Math.abs(r.currentTime - l.currentTime) > 0.25
-  ) {
-    r.currentTime = l.currentTime;
+video.addEventListener('play', function() {
+  if (currentType === 'video') {
+    setStatus('Видео воспроизводится');
   }
 });
 
-l.addEventListener('play', () => {
-  if (stage.classList.contains('vr')) {
-    r.play().catch(() => {});
+video.addEventListener('pause', function() {
+  if (currentType === 'video' && !video.ended) {
+    setStatus('Видео на паузе');
+  }
+});
+  
+// Проверка поддержки браузера
+if (!document.fullscreenEnabled) {
+  console.log('Полный экран может быть недоступен');
+}
+
+// Enter открывает ссылку
+document.getElementById('urlInput').addEventListener(
+  'keydown',
+  function(event) {
+    if (event.key === 'Enter') {
+      openURL();
+    }
+  }
+);
+
+// Очистка временного видео при закрытии страницы
+window.addEventListener('beforeunload', function() {
+  if (localURL) {
+    URL.revokeObjectURL(localURL);
   }
 });
 
-l.addEventListener('pause', () => {
-  r.pause();
-});
+// Начальное состояние
+setStatus('Плеер готов. Выбери видео или вставь ссылку.');
 
-l.addEventListener('error', () => {
-  document.getElementById('status').textContent =
-    'Не удалось открыть видео. Проверь ссылку или формат.';
-});
 </script>
 </body>
 </html>
