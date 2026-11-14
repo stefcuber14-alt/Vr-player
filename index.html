@@ -544,11 +544,57 @@ function updateVR() {
   }
 }
 
-function toggleVR() {
+
+async function toggleVR() {
   if (!currentType) {
     setStatus('Сначала открой видео');
     return;
   }
+
+  // Запрос разрешения на датчики
+  if (
+    typeof DeviceOrientationEvent !== 'undefined' &&
+    typeof DeviceOrientationEvent.requestPermission === 'function'
+  ) {
+    try {
+      const permission =
+        await DeviceOrientationEvent.requestPermission();
+
+      if (permission !== 'granted') {
+        setStatus('Доступ к датчикам не разрешён');
+        return;
+      }
+    } catch (error) {
+      setStatus('Не удалось получить доступ к датчикам');
+      return;
+    }
+  }
+
+  vrEnabled = !vrEnabled;
+
+  document.getElementById('player').style.display =
+    vrEnabled ? 'none' : 'block';
+
+  vrView.style.display =
+    vrEnabled ? 'flex' : 'none';
+
+  if (vrEnabled) {
+    try {
+      await document.documentElement.requestFullscreen();
+    } catch (error) {
+      setStatus('Полный экран недоступен');
+    }
+  }
+
+  updateVR();
+
+  setStatus(
+    vrEnabled
+      ? 'VR включён · датчики активны'
+      : 'Обычный режим включён'
+  );
+}
+  
 
   vrEnabled = !vrEnabled;
 
